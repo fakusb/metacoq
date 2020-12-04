@@ -12,6 +12,7 @@ sig
   val unquote_relevance : quoted_relevance -> Sorts.relevance
   val unquote_int :  quoted_int -> int
   val unquote_bool : quoted_bool -> bool
+  val unquote_int63 :  quoted_int63 -> Uint63.t
   (* val unquote_sort : quoted_sort -> Sorts.t *)
   (* val unquote_sort_family : quoted_sort_family -> Sorts.family *)
   val unquote_cast_kind : quoted_cast_kind -> Constr.cast_kind
@@ -22,7 +23,7 @@ sig
   val unquote_universe : Evd.evar_map -> quoted_sort -> Evd.evar_map * Univ.Universe.t
   val unquote_universe_instance: Evd.evar_map -> quoted_univ_instance -> Evd.evar_map * Univ.Instance.t
   (* val representsIndConstuctor : quoted_inductive -> Term.constr -> bool *)
-  val inspect_term : t -> (t, quoted_int, quoted_ident, quoted_aname, quoted_sort, quoted_cast_kind, quoted_kernel_name, quoted_inductive, quoted_relevance, quoted_univ_instance, quoted_proj) structure_of_term
+  val inspect_term : t -> (t, quoted_int, quoted_ident, quoted_aname, quoted_sort, quoted_cast_kind, quoted_kernel_name, quoted_inductive, quoted_relevance, quoted_univ_instance, quoted_proj, quoted_int63) structure_of_term
 
 end
 
@@ -82,7 +83,7 @@ struct
         evm, Constr.mkIndU (i, u)
       | ACoq_tCase (((i, _), r), ty, d, brs) ->
         let ind = D.unquote_inductive i in
-        let relevance = D.unquote_relevance r in 
+        let relevance = D.unquote_relevance r in
         let evm, ty = aux evm ty in
         let evm, d = aux evm d in
         let evm, brs = map_evm aux evm (List.map snd brs) in
@@ -118,7 +119,7 @@ struct
          let evm, t' = aux evm t in
          evm, Constr.mkProj (p', t')
       (* | _ ->  not_supported_verb trm "big_case"
-       * 
+       *
        * | ACoq_tProj (proj,t) ->
        *   let (ind, _, narg) = D.unquote_proj proj in (\* todo: is narg the correct projection? *\)
        *   let ind' = D.unquote_inductive ind in
@@ -127,7 +128,9 @@ struct
        *   (match List.nth projs (D.unquote_int narg) with
        *    | Some p -> evm, Constr.mkProj (Names.Projection.make p false, t)
        *    | None -> (\*bad_term trm *\) ) *)
+      | ACoq_tInt x -> evm, Constr.mkInt (D.unquote_int63 x)
       | _ -> failwith "big case of denote_term"
+
     in aux evm trm
 
 end
